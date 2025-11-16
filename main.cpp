@@ -8,6 +8,7 @@ struct Item {
     float price;
     int quantity;
 };
+void mainMenu();
 void addItem(Item* &menu, int &count);
 void displayMenu(Item* menu, int count);
 void updateItem(Item* menu, int count);
@@ -19,7 +20,6 @@ void displayCart(Item* cart, int cartCount);
 void cancelOrder(Item* &cart, int &cartCount);
 void updateCart(Item* cart, int cartCount);
 void calculateTotal(Item* cart, int cartCount);
-void mainMenu();
 
 int main() {
     mainMenu();
@@ -51,13 +51,32 @@ void mainMenu() {
             case 9: cancelOrder(cart, cartCount); break;
             case 10: updateCart(cart, cartCount); break;
             case 11: calculateTotal(cart, cartCount); break;
-            case 0: cout << "Exiting...\n"; break;
+            case 0: cout << "Exiting!\n"; break;
             default: cout << "Invalid choice!\n";
         }
     } while(choice != 0);
 
     delete[] menu;
     delete[] cart;
+}
+void addItem(Item* &menu, int &count) {
+    Item* temp = new Item[count + 1];
+    for(int i = 0; i < count; i++) 
+    temp[i] = menu[i];
+    delete [] menu;
+    menu = temp;
+
+    cout << "Enter item ID: "; 
+    cin >> menu[count].id; 
+    cin.ignore();
+    cout << "Enter item name: "; 
+    getline(cin, menu[count].name);
+    cout << "Enter price: "; 
+    cin >> menu[count].price;
+    cout << "Enter quantity: "; 
+    cin >> menu[count].quantity;
+    count++;
+    cout << "Item added to menu successfully.\n";
 }
 
 void displayMenu(Item* menu, int count) {
@@ -89,12 +108,72 @@ void updateItem(Item* menu, int count) {
     }
     cout << "Item not found.\n";
 }
+void removeItem(Item* &menu, int &count) {
+    int id; 
+    cout << "Enter item ID to remove: "; 
+    cin >> id;
+    int index = -1;
+    for(int i = 0; i < count; i++) 
+    if(menu[i].id == id) 
+    index = i;
+    if(index == -1) { 
+        cout << "Item not found.\n"; 
+        return; }
+    Item* temp = new Item[count - 1];
+    for(int i = 0, j = 0; i < count; i++) 
+    if(i != index) 
+    temp[j++] = menu[i];
+    delete [] menu;
+    menu = temp;
+    count--;
+    cout << "Item removed from menu.\n";
+}
+void searchItem(Item* menu, int count) {
+    string name; 
+    cout << "Enter item name to search: "; 
+    cin.ignore(); 
+    getline(cin, name);
+    for(int i = 0; i < count; i++) {
+        if(menu[i].name == name) {
+            cout << "Found: ID=" << menu[i].id << ", Price=" << menu[i].price << ", Quantity=" << menu[i].quantity << "\n";
+            return;
+        }
+    }
+    cout << "Item not found.\n";
+}
 
 void sortMenuByPrice(Item* menu, int count) {
     for(int i = 0; i < count-1; i++) {
         for(int j = 0; j < count-i-1; j++) {
-            if(menu[j].price > menu[j+1].price) swap(menu[j], menu[j+1]);
+            if(menu[j].price > menu[j+1].price) 
+            swap(menu[j], menu[j+1]);
         }
     }
     cout << "Menu sorted by price.\n";
+}
+void orderItem(Item* menu, int menuCount, Item* &cart, int &cartCount) {
+    int id, qty; 
+    cout << "Enter item ID to order: "; 
+    cin >> id;
+    cout << "Enter quantity: "; 
+    cin >> qty;
+    for(int i = 0; i < menuCount; i++) {
+        if(menu[i].id == id) {
+            if(qty > menu[i].quantity) { 
+                cout << "Not enough stock.\n"; 
+                return; }
+            Item* temp = new Item[cartCount + 1];
+            for(int j = 0; j < cartCount; j++) 
+            temp[j] = cart[j];
+            delete [] cart; 
+            cart = temp;
+            cart[cartCount] = menu[i];
+            cart[cartCount].quantity = qty;
+            cartCount++;
+            menu[i].quantity -= qty;
+            cout << "Item added to cart.\n"; 
+            return;
+        }
+    }
+    cout << "Item not found.\n";
 }
