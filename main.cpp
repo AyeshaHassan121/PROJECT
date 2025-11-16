@@ -177,3 +177,63 @@ void orderItem(Item* menu, int menuCount, Item* &cart, int &cartCount) {
     }
     cout << "Item not found.\n";
 }
+void displayCart(Item* cart, int cartCount) {
+    if(cartCount == 0) {
+        cout << "Cart is empty.\n";
+        return;
+    }
+
+    cout << "\n--- Cart Items ---\n";
+    cout << "ID\tName\t\tPrice\tQuantity\n";
+    for(int i = 0; i < cartCount; i++) {
+        cout << cart[i].id << "\t" << cart[i].name << "\t\t"
+             << cart[i].price << "\t" << cart[i].quantity << "\n";
+    }
+}
+void cancelOrder(Item* &cart, int &cartCount) {
+    int id;
+    cout << "Enter item ID to remove from cart: ";
+    cin >> id;
+
+    int index = -1;
+    for(int i = 0; i < cartCount; i++) {
+        if(cart[i].id == id) index = i;
+    }
+
+    if(index == -1) {
+        cout << "Item not in cart.\n";
+        return;
+    }
+
+    Item* temp = new Item[cartCount - 1];
+    for(int i = 0, j = 0; i < cartCount; i++) {
+        if(i != index) temp[j++] = cart[i];
+    }
+    delete[] cart;
+    cart = temp;
+    cartCount--;
+    cout << "Item removed from cart.\n";
+}
+void updateCart(Item* cart, int cartCount) {
+    int id;
+    cout << "Enter item ID to update quantity: ";
+    cin >> id;
+
+    for(int i = 0; i < cartCount; i++) {
+        if(cart[i].id == id) {
+            cout << "Enter new quantity: ";
+            cin >> cart[i].quantity;
+            cout << "Cart updated.\n";
+            return;
+        }
+    }
+
+    cout << "Item not found in cart.\n";
+}
+void calculateTotal(Item* cart, int cartCount) {
+    float total = 0;
+    for(int i = 0; i < cartCount; i++)
+        total += cart[i].price * cart[i].quantity;
+
+    cout << "Total amount: " << total << "\n";
+}
