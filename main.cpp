@@ -27,6 +27,9 @@ void saveMenuToText(Item* menu, int count);
 void loadMenuFromText(Item* &menu, int &count);
 void saveMenuToBinary(Item* menu, int count);
 void loadMenuFromBinary(Item* &menu, int &count);
+void saveCartToText(Item* cart, int cartCount);
+void loadCartFromText(Item* &cart, int &cartCount);
+
 
 int main() {
     mainMenu();
@@ -39,6 +42,9 @@ void mainMenu() {
     int choice;
 
     loadMenuFromText(menu, menuCount);
+    loadCartFromText(cart, cartCount);
+
+
     
 
     do {
@@ -47,7 +53,7 @@ void mainMenu() {
         cout << "5. Search Item\n6. Sort Menu by Price\n7. Order Item\n8. Display Cart\n";
         cout << "9. Cancel Order\n10. Update Cart\n11. Calculate Total\n12. Checkout\n";
         cout << "13. Save Menu to Text File\n14. Load Menu from Text File\n15. Save Menu to Binary\n16. Load Menu from Binary\n";
-        cout << "0. Exit.\nEnter your choice: ";
+        cout << "17. Save Cart\n18. Load Cart\n0. Exit.\nEnter your choice: ";
         cin >> choice;
 
         switch(choice) {
@@ -67,6 +73,9 @@ void mainMenu() {
             case 14: loadMenuFromText(menu, menuCount); break;
             case 15: saveMenuToBinary(menu, menuCount); break;
             case 16: loadMenuFromBinary(menu, menuCount); break;
+            case 17: saveCartToText(cart, cartCount); break;
+            case 18: loadCartFromText(cart, cartCount); break;
+
             case 0: cout << "Exiting!\n"; break;
             default: cout << "Invalid choice!\n";
         }
@@ -84,8 +93,10 @@ void addItem(Item* &menu, int &count) {
 
     cout << "Enter item ID: "; 
     cin >> menu[count].id; 
-    cout << "Enter item name: "; 
-    cin >> menu[count].name;
+    cin.ignore(); 
+    cout << "Enter item name: ";
+    getline(cin, menu[count].name); 
+
     cout << "Enter price: "; 
     cin >> menu[count].price;
     cout << "Enter quantity: "; 
@@ -115,8 +126,11 @@ void updateItem(Item* menu, int count) {
 
     for(int i = 0; i < count; i++) {
         if(menu[i].id == id) {
-            cout << "Enter new name, price, quantity: ";
-            cin >> menu[i].name >> menu[i].price >> menu[i].quantity;
+           cin.ignore(); 
+            cout << "Enter new name: ";
+            getline(cin, menu[i].name); 
+            cout << "Enter new price and quantity: ";
+            cin >> menu[i].price >> menu[i].quantity;
             cout << "Item updated successfully!\n";
             return;
         }
@@ -128,9 +142,12 @@ void removeItem(Item* &menu, int &count) {
     cout << "Enter item ID to remove: "; 
     cin >> id;
     int index = -1;
-    for(int i = 0; i < count; i++) 
-    if(menu[i].id == id) 
+    for(int i = 0; i < count; i++) {
+    if(menu[i].id == id) {
     index = i;
+    break;
+    }
+}
     if(index == -1) { 
         cout << "Item not found.\n"; 
         return; }
@@ -144,9 +161,10 @@ void removeItem(Item* &menu, int &count) {
     cout << "Item removed from menu.\n";
 }
 void searchItem(Item* menu, int count) {
-    string name; 
-    cout << "Enter item name to search: "; 
-    cin>>name;
+    cin.ignore(); 
+    string name;
+    cout << "Enter item name to search: ";
+    getline(cin, name); 
     for(int i = 0; i < count; i++) {
         if(menu[i].name == name) {
             cout << "Found: ID=" << menu[i].id << ", Price=" << menu[i].price << ", Quantity=" << menu[i].quantity << "\n";
@@ -157,13 +175,20 @@ void searchItem(Item* menu, int count) {
 }
 
 void sortMenuByPrice(Item* menu, int count) {
-    for(int i = 0; i < count-1; i++) {
+    if(count == 0) {
+        cout << "Menu is empty!\n";
+        return;
+    }
+     for(int i = 0; i < count-1; i++) {
         for(int j = 0; j < count-i-1; j++) {
-            if(menu[j].price > menu[j+1].price) 
-            swap(menu[j], menu[j+1]);
+            if(menu[j].price > menu[j+1].price) {
+                swap(menu[j], menu[j+1]);
+            }
         }
     }
+    
     cout << "Menu sorted by price.\n";
+    displayMenu(menu, count);  
 }
 void orderItem(Item* menu, int menuCount, Item* &cart, int &cartCount) {
     int id, qty; 
@@ -211,8 +236,10 @@ void cancelOrder(Item* &cart, int &cartCount) {
 
     int index = -1;
     for(int i = 0; i < cartCount; i++) {
-        if(cart[i].id == id) 
+        if(cart[i].id == id) {
         index = i;
+        break;
+        }
     }
 
     if(index == -1) {
@@ -267,7 +294,7 @@ void saveMenuToText(Item* menu, int count) {
     }
     ofstream out("menu.txt");
     for(int i = 0; i < count; i++)
-        out << menu[i].id << " " << menu[i].name << " " << menu[i].price << " " << menu[i].quantity << "\n";
+        out << menu[i].id << " " << menu[i].price << " " << menu[i].quantity << " " << menu[i].name << "\n";
     out.close();
     cout << "Menu saved to menu.txt\n";
 }
@@ -279,60 +306,148 @@ void loadMenuFromText(Item* &menu, int &count) {
     }
 
     Item* temp = nullptr;
+    int itemCount = 0;
     int id, quantity;
     float price;
     string name;
-    int tempCount = 0;
 
-    while (in >> id >> name >> price >> quantity) {
-        Item* newMenu = new Item[tempCount + 1];
-        for (int i = 0; i < tempCount; i++) newMenu[i] = temp[i];
+    while (in >> id >> price >> quantity) {
+        in.ignore(); 
+        getline(in, name); 
+
+        Item item;
+        item.id = id;
+        item.price = price;
+        item.quantity = quantity;
+        item.name = name;
+
+        Item* newMenu = new Item[itemCount + 1];
+        for (int i = 0; i < itemCount; i++) newMenu[i] = temp[i];
         delete[] temp;
         temp = newMenu;
 
-        temp[tempCount].id = id;
-        temp[tempCount].name = name;
-        temp[tempCount].price = price;
-        temp[tempCount].quantity = quantity;
-        tempCount++;
+        temp[itemCount] = item;
+        itemCount++;
     }
+
     delete[] menu;
     menu = temp;
-    count = tempCount;
-
-    cout << "Menu loaded from menu.txt, " << count << " items.\n";
+    count = itemCount;
     in.close();
+
+    cout << "Menu loaded from menu.txt (" << count << " items).\n";
 }
 
 void saveMenuToBinary(Item* menu, int count) {
     ofstream out("menu.dat", ios::binary);
-    out.write((char*)menu, sizeof(Item) * count);
+    if (!out) {
+        cout << "Failed to open menu.dat for writing.\n";
+        return;
+    }
+
+    out.write((char*)&count, sizeof(int)); 
+
+    for (int i = 0; i < count; i++) {
+        out.write((char*)&menu[i].id, sizeof(int));
+        out.write((char*)&menu[i].price, sizeof(float));
+        out.write((char*)&menu[i].quantity, sizeof(int));
+
+        int nameLen = menu[i].name.size();
+        out.write((char*)&nameLen, sizeof(int));  
+        for (int j = 0; j < nameLen; j++) {
+            char ch = menu[i].name[j];
+            out.write(&ch, sizeof(char));  
+        }
+    }
+
     out.close();
     cout << "Menu saved to menu.dat\n";
 }
+
 void loadMenuFromBinary(Item* &menu, int &count) {
     ifstream in("menu.dat", ios::binary);
     if (!in) {
         cout << "menu.dat not found.\n";
+        menu = nullptr;
+        count = 0;
         return;
     }
 
-    in.seekg(0, ios::end);
-    size_t fileSize = in.tellg();
-    in.seekg(0, ios::beg);
-
-    count = fileSize / sizeof(Item);
-    if(count == 0) { 
-        menu = nullptr; 
-        cout << "Binary file is empty.\n";
-        return; 
+    in.read((char*)&count, sizeof(int));
+    if (count <= 0) {
+        cout << "Binary file empty or corrupted.\n";
+        menu = nullptr;
+        count = 0;
+        in.close();
+        return;
     }
 
     delete[] menu;
     menu = new Item[count];
 
-    in.read(reinterpret_cast<char*>(menu), sizeof(Item) * count);
+    for (int i = 0; i < count; i++) {
+        in.read((char*)&menu[i].id, sizeof(int));
+        in.read((char*)&menu[i].price, sizeof(float));
+        in.read((char*)&menu[i].quantity, sizeof(int));
+
+        int nameLen;
+        in.read((char*)&nameLen, sizeof(int));
+
+        menu[i].name.resize(nameLen);  
+        for (int j = 0; j < nameLen; j++) {
+            char ch;
+            in.read(&ch, sizeof(char));
+            menu[i].name[j] = ch;     
+        }
+    }
+
+    in.close();
+    cout << "Menu loaded from menu.dat (" << count << " items).\n";
+}
+
+void saveCartToText(Item* cart, int cartCount) { 
+    ofstream out("cart.txt"); 
+    for(int i = 0; i < cartCount; i++) 
+        out << cart[i].id << " " << cart[i].price << " " << cart[i].quantity << " " << cart[i].name << "\n"; 
+    out.close(); 
+    cout << "Cart saved to cart.txt\n";
+}
+void loadCartFromText(Item* &cart, int &cartCount) {
+    ifstream in("cart.txt");
+    if (!in) {
+        cout << "cart.txt not found.\n";
+        return;
+    }
+
+    Item* temp = nullptr;
+    int count = 0;
+    int id, quantity;
+    float price;
+    string name;
+
+    while (in >> id >> price >> quantity) {
+        in.ignore(); 
+        getline(in, name); 
+
+        Item item;
+        item.id = id;
+        item.price = price;
+        item.quantity = quantity;
+        item.name = name;
+
+        Item* newCart = new Item[count + 1];
+        for (int i = 0; i < count; i++) newCart[i] = temp[i];
+        delete[] temp;
+        temp = newCart;
+
+        temp[count] = item;
+        count++;
+    }
+
+    delete[] cart;
+    cart = temp;
+    cartCount = count;
     in.close();
 
-    cout << "Menu loaded from menu.dat, " << count << " items.\n";
+    cout << "Cart loaded from cart.txt (" << cartCount << " items).\n";
 }
